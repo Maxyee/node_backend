@@ -75,8 +75,8 @@ Moreover, after installing the express and mongo to our project we will see the 
   "author": "julhas",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1",
-    "mongoose": "^5.9.9"
+    +"express": "^4.17.1",
+    +"mongoose": "^5.9.9"
   }
 }
 
