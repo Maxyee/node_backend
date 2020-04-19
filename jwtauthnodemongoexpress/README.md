@@ -45,7 +45,7 @@ dependencies is added to our project or not? . Just open the `package.json` file
 
 example at the very beginning when I did not install any dependencies to my project the `package.json` file is look like this
 
-```json
+```js
 {
   "name": "jwtauth",
   "version": "1.0.0",
@@ -62,7 +62,7 @@ example at the very beginning when I did not install any dependencies to my proj
 
 Moreover, after installing the express and mongo to our project we will see the changes to our `package.json` file in this way
 
-```json
+```js
 
 {
   "name": "jwtauth",
@@ -75,8 +75,8 @@ Moreover, after installing the express and mongo to our project we will see the 
   "author": "julhas",
   "license": "ISC",
   "dependencies": {
-    +"express": "^4.17.1",
-    +"mongoose": "^5.9.9"
+    "express": "^4.17.1",  // this line added for express
+    "mongoose": "^5.9.9"   // this line added for mongoose
   }
 }
 
