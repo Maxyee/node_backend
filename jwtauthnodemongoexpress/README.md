@@ -29,6 +29,57 @@ For making that file just we need to run a command into our bash,
 
 `npm init`
 
-then the commandline will ask some question, we can answer those and submit `yes` on last line. This process will create a `package.json`
-file
+then the commandline will ask some question, we can answer those and submit `yes` on last line. This process will create a `package.json` file
 
+On the contrary, we need some other packages to be installed into our project such as, express node and mongo. As a result, below this
+command will install all of those packages to our project 
+
+for installing express
+`npm install express --save`
+
+for installing mongodb instance to our project
+`npm install mongoose --save`
+
+Finally, at this moment we installed all the major dependecies to our project. How we can check that all of this 
+dependencies is added to our project or not? . Just open the `package.json` file and you will find the changes
+
+example at the very beginning when I did not install any dependencies to my project the `package.json` file is look like this
+
+```json
+{
+  "name": "jwtauth",
+  "version": "1.0.0",
+  "description": "jwt authentication with refresher token express and node",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "julhas",
+  "license": "ISC",
+}
+
+```
+
+Moreover, after installing the express and mongo to our project we will see the changes to our `package.json` file in this way
+
+```json
+
+{
+  "name": "jwtauth",
+  "version": "1.0.0",
+  "description": "jwt authentication with refresher token express and node",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "julhas",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^5.9.9"
+  }
+}
+
+
+
+```
