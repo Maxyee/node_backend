@@ -10,4 +10,106 @@ npm install express jsonwebtoken amqplib nodemon
 
 - do this work for three separate time into 3 separate folders
 
--
+- Lets start with the `auth-service`
+- we have to install `mongoose` package into the auth service packages
+
+```bash
+npm install mongoose
+```
+
+- now we have to make a file `index.js` into the auth service folder and put this code into it.
+
+```js
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT_ONE || 7070;
+const mongoose = require("mongoose");
+
+mongoose.connect(
+  "mongodb://localhost/auth-service",
+  {
+    userNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  () => {
+    console.log(`Auth-Service DB Connected`);
+  }
+);
+
+app.use(express.json());
+
+app.listen(PORT, () => {
+  console.log(`Auth-Service at ${PORT}`);
+});
+```
+
+- let create a `Model` file called `User.js` and put the code for user
+
+```js
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const UserSchema = new Schema({
+  name: String,
+  email: String,
+  password: String,
+  created_at: {
+    type: Date,
+    default: Date.now(),
+  },
+});
+
+module.exports = User = mongoose.model("user", UserSchema);
+```
+
+- lets export that User model into `index.js` file
+
+```js
+const User = require("./User");
+```
+
+- now we have to write our register and login API `auth-service/index.js` file
+
+```js
+const jwt = require("jsonwebtoken");
+
+// Register
+app.post("/auth/register", async (req, res) => {
+  const { email, password, name } = req.body;
+  const userExists = await User.findOne({ email: email });
+  if (userExists) {
+    return res.json({ message: "User already registered" });
+  } else {
+    const newUser = new User({
+      name,
+      email,
+      password,
+    });
+    newUser.save();
+    return res.json(newUser);
+  }
+});
+// Login
+app.post("/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email: email });
+  if (!user) {
+    return res.json({ message: "User does not exist" });
+  } else {
+    if (password !== user.password) {
+      return res.json({ message: "Password Incorrect" });
+    }
+    const payload = {
+      email,
+      name: user.name,
+    };
+    jwt.sign(payload, "secret", (err, token) => {
+      if (err) {
+        console.log(err);
+      } else {
+        return res.json({ token: token });
+      }
+    });
+  }
+});
+```
