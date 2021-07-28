@@ -4,6 +4,7 @@ const PORT = process.env.PORT_ONE || 7070;
 const mongoose = require('mongoose');
 const User = require('./User');
 const jwt = require('jsonwebtoken');
+app.use(express.json());
 
 mongoose.connect("mongodb://localhost/auth-service", {
     useNewUrlParser: true,
@@ -56,7 +57,6 @@ app.post("/auth/login",async (req, res) => {
     }
 });
 
-app.use(express.json());
 
 app.listen(PORT, () => {
     console.log(`Auth-Service at ${PORT}`);

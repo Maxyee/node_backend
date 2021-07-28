@@ -1,5 +1,11 @@
 # Ecommerce Microservice With Node and Rabbitmq
 
+# Structure for this application using rabbitmq
+
+![alt text](https://github.com/Maxyee/node_backend/blob/master/ecom-microservice-node-rabbitmq/ScreenShot/rabbitmq_one.png)
+
+![alt text](https://github.com/Maxyee/node_backend/blob/master/ecom-microservice-node-rabbitmq/ScreenShot/rabbitmq_two.png)
+
 - we have to make three service
 - auth, order and product service
 - Into the `auth-service`, `order-service` and `product-service` folder we need to install some packages
@@ -24,6 +30,7 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT_ONE || 7070;
 const mongoose = require("mongoose");
+app.use(express.json());
 
 mongoose.connect(
   "mongodb://localhost/auth-service",
@@ -35,8 +42,6 @@ mongoose.connect(
     console.log(`Auth-Service DB Connected`);
   }
 );
-
-app.use(express.json());
 
 app.listen(PORT, () => {
   console.log(`Auth-Service at ${PORT}`);
@@ -112,4 +117,40 @@ app.post("/auth/login", async (req, res) => {
     });
   }
 });
+```
+
+- now we have to create a authenticated middleware
+- lets create a folder `middleware`
+- into that folder use below commands
+
+```bash
+npm init -y
+npm install jsonwebtoken
+```
+
+- lets create a file called `isAuthentication.js` into the middleware folder
+
+```bash
+touch middleware/isAuthentication.js
+```
+
+- put below code to the `isAuthentication.js` file
+
+```js
+const jwt = require("jsonwebtoken");
+
+export async function isAuthenticated(req, res, next) {
+  const token = req.headers["authorization"].split(" ")[1];
+  //"Bearer <token>".split(" ")[1]
+  // ["Bearer","<token>"]
+
+  jwt.verify(token, "secret", (err, user) => {
+    if (err) {
+      return res.json({ message: err });
+    } else {
+      req.user = user;
+      next();
+    }
+  });
+}
 ```
