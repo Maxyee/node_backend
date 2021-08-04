@@ -224,5 +224,191 @@ const Product = require("./Product");
 - lets make the product api
 
 ```js
+// create product API
+app.post("/product/create", isAuthenticated, async (req, res) => {
+  const { name, description, price } = req.body;
+  const newProduct = new Product({
+    name,
+    description,
+    price,
+  });
+  newProduct.save();
+  return res.json(newProduct);
+});
 
+// product buy API
+app.post("/product/buy", isAuthenticated, async (req, res) => {
+  const { ids } = req.body;
+  const products = await Product.find({ _id: { $in: ids } });
+});
 ```
+
+- now for buy product we need store our Orders. So we have to Work with `order-service` first
+
+- into the `order-service` folder create a file called `index.js` and `Order.js` file
+
+```js
+// order.js
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const OrderSchema = new Schema({
+  products: [
+    {
+      product_id: String,
+    },
+  ],
+  user: String,
+  total_price: Number,
+  created_at: {
+    type: Date,
+    default: Date.now(),
+  },
+});
+
+module.exports = Order = mongoose.model("order", OrderSchema);
+```
+
+- and for order `index.js` file
+
+```js
+// order service index
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT_ONE || 9090;
+const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const amqp = require("amqplib");
+const Order = require("./Order");
+const { isAuthenticated } = require("../middleware/isAuthentication");
+app.use(express.json());
+
+var channel, connection;
+
+mongoose.connect(
+  "mongodb://localhost/order-service",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  () => {
+    console.log(`Order-Service DB Connected`);
+  }
+);
+
+async function connect() {
+  const amqpServer = "amqp://localhost:5672";
+  connection = await amqp.connect(amqpServer);
+  channel = await connection.createChannel();
+  await channel.assertQueue("ORDER");
+}
+connect();
+
+app.listen(PORT, () => {
+  console.log(`Order-Service at ${PORT}`);
+});
+```
+
+- now lets complete our product buy API `product-service/index`
+
+```js
+app.post("/product/buy", isAuthenticated, async (req, res) => {
+  const { ids } = req.body;
+  const products = await Product.find({ _id: { $in: ids } });
+
+  channel.sendToQueue(
+    "ORDER",
+    Buffer.from(
+      JSON.stringify({
+        products,
+        userEmail: req.user.email,
+      })
+    )
+  );
+});
+```
+
+- for the queue work we now have to open `order-service/index` file
+
+```js
+connect().then(() => {
+  channel.consume("ORDER", (data) => {
+    const { products, userEmail } = JSON.parse(data.content);
+    console.log("Consuming Order queue");
+    console.log(products);
+  });
+});
+
+// by writting this code we now can consume data from one service to another using the rabbitmq
+```
+
+- Order and Product service queue handling
+
+```js
+// product service index
+app.post("/product/buy", isAuthenticated, async (req, res) => {
+  const { ids } = req.body;
+  const products = await Product.find({ _id: { $in: ids } });
+
+  channel.sendToQueue(
+    "ORDER",
+    Buffer.from(
+      JSON.stringify({
+        products,
+        userEmail: req.user.email,
+      })
+    )
+  );
+
+  channel.consume("PRODUCT", (data) => {
+    console.log("Consuming PRODUCT Queue");
+    order = JSON.parse(data.content);
+    channel.ack(data);
+  });
+  return res.json(order);
+});
+```
+
+- finally the order service queue
+
+```js
+async function connect() {
+  const amqpServer = "amqp://localhost:5672";
+  connection = await amqp.connect(amqpServer);
+  channel = await connection.createChannel();
+  await channel.assertQueue("ORDER");
+}
+
+function createOrder(product, userEmail) {
+  let total = 0;
+  for (let t = 0; t < products.length; t++) {
+    total += products[t].price;
+  }
+  const newOrder = new Order({
+    products,
+    user: userEmail,
+    total_price: total,
+  });
+  newOrder.save();
+  return newOrder;
+}
+
+connect().then(() => {
+  channel.consume("ORDER", (data) => {
+    console.log("Consuming Order queue");
+    const { products, userEmail } = JSON.parse(data.content);
+    const newOrder = createOrder(products, userEmail);
+    channel.ack(data);
+    channel.sendToQueue(
+      "PRODUCT",
+      Buffer.from(
+        JSON.stringify({
+          newOrder,
+        })
+      )
+    );
+  });
+});
+```
+
+- thats all ..
