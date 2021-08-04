@@ -154,3 +154,75 @@ export async function isAuthenticated(req, res, next) {
   });
 }
 ```
+
+- now we have to ready our `product-service`
+
+- at first, put the code in `index.js` file
+
+```js
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT_ONE || 8080;
+const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const amqp = require("amqp");
+app.use(express.json());
+
+var channel, connection;
+
+mongoose.connect(
+  "mongodb://localhost/product-service",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  () => {
+    console.log(`Product-Service DB Connected`);
+  }
+);
+
+async function connect() {
+  const amqpServer = "amqp://localhost:5672";
+  connection = await amqp.connect(amqpServer);
+  channel = await connection.createChannel();
+  await channel.assertQueue("PRODUCT");
+}
+connect();
+
+app.listen(PORT, () => {
+  console.log(`Product-Service at ${PORT}`);
+});
+```
+
+- create a file called `Product.js` into the `product-service` directory
+
+- put the code to the file and create the ProductSchema
+
+```js
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const ProductSchema = new Schema({
+  name: String,
+  description: String,
+  price: Number,
+  created_at: {
+    type: Date,
+    default: Date.now(),
+  },
+});
+
+module.exports = Product = mongoose.model("product", ProductSchema);
+```
+
+- now implement that product schema to the `index.js` file
+
+```js
+const Product = require("./Product");
+```
+
+- lets make the product api
+
+```js
+
+```
